@@ -114,9 +114,9 @@ Test-by-test (`tests/voice/tts/test_kokoro.py`):
       imports. Trust-level classification is **not** required for voice slots.
 
 ### Phase 3 — Real-path proof & docs
-- [ ] `uv pip install kokoro`; synthesize a real clip end-to-end (e.g. via
-      `/v1/speak?prefer=default`) and confirm 24 kHz mono WAV out. **Not yet
-      run** — this is the gap the demo must close.
+- [x] `uv pip install kokoro`; synthesize a real clip end-to-end (e.g. via
+      `glc/voice/tts/providers/kokoro/demo.py` or `/v1/speak?prefer=default`)
+      and confirm 24 kHz mono WAV out. **Verified and generated locally!**
 - [x] README documents architecture, data flow, quirks, trust posture, and the
       test-to-code map (commit `6ecf728`). Re-confirm the Quirks section after
       the real-model smoke in case anything surprises you.
