@@ -26,9 +26,10 @@ The agent runtime never sees raw float32 frames — only the typed
 
 from __future__ import annotations
 
+import asyncio
 import base64
 
-from glc.voice.tts.base import SynthesizeResult, TTSProvider
+from glc.voice.tts.base import SynthesizeResult, TTSError, TTSProvider
 
 # Kokoro's default open-weights voice. Short ids like af_bella, af_sky,
 # am_adam select a voice from the bundled palette.
@@ -41,20 +42,47 @@ class Provider(TTSProvider):
     name = "kokoro"
 
     async def synthesize(self, text: str, voice_id: str | None = None) -> SynthesizeResult:
+        # Empty string and None both fall back to the default voice —
+        # callers shouldn't have to distinguish "unspecified" from "blank",
+        # and both the mock and the real runner should see the same value.
+        voice = voice_id or DEFAULT_VOICE_ID
+
         # Test / gateway-injected upstream. The mock owns pipeline-load
         # accounting, so delegating keeps the load count at exactly one
         # across calls and lets the structural tests assert on it.
         mock = self.config.get("mock")
         if mock is not None:
-            return await mock.synthesize(text, voice_id)
+            return await mock.synthesize(text, voice)
 
         # Real local synthesis. The runner caches the KPipeline in a
         # module global, so the model is loaded once and reused for the
         # life of the process — no re-load per call.
         from glc.voice.tts.providers.kokoro import runner
 
-        voice = voice_id or DEFAULT_VOICE_ID
-        wav_bytes, sample_rate = runner.synthesize(text, voice)
+        # Neural inference + numpy + wave encoding are synchronous and
+        # CPU-bound; running them inline would block the asyncio event
+        # loop for every concurrent gateway request. Offload to a worker
+        # thread so the gateway stays responsive.
+        try:
+            wav_bytes, sample_rate = await asyncio.to_thread(
+                runner.synthesize, text, voice
+            )
+        except TTSError:
+            # Already structured — let it through unchanged.
+            raise
+        except Exception as e:
+            # kokoro pkg missing, numpy missing, model-time errors, etc.
+            # Surface as a structured upstream failure so the router and
+            # gateway can report it the same way they do for the mock
+            # branch (see TTSError contract in glc.voice.tts.base).
+            raise TTSError(f"kokoro synthesis failed: {e}", status=502) from e
+
+        if not wav_bytes:
+            # runner returns b"" when the generator yields nothing; that
+            # would produce a SynthesizeResult claiming mime=audio/wav for
+            # 0 bytes (no WAV header). Refuse to emit a malformed envelope.
+            raise TTSError("kokoro produced no audio", status=502)
+
         return SynthesizeResult(
             audio_b64=base64.b64encode(wav_bytes).decode("ascii"),
             mime="audio/wav",
