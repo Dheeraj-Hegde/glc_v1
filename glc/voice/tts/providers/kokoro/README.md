@@ -15,7 +15,7 @@
 | Satya Nayak | @SatyaNayak |
 | Soubhik Maji | @SoubhikMaji |
 | Sri Varshini Dharmaraj | @SriVarshiniDharmaraj |
-| Sujit Kumar Thakur | @SujitKumarThakur |
+| Sujit Kumar Thakur | @sujthr |
 | Vikas Gupta | @VikasGupta |
 | Yashwanth G | @YashwanthG |
 
