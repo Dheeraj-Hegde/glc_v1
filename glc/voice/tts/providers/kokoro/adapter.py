@@ -68,11 +68,22 @@ class Provider(TTSProvider):
         except TTSError:
             # Already structured — let it through unchanged.
             raise
+        except ImportError as e:
+            # Optional deps (numpy, kokoro pkg, …) are not installed in
+            # this environment. That makes the provider effectively a
+            # stub here — signal via NotImplementedError so the router
+            # produces the canonical 501 + "try prefer=fallback" message
+            # (see glc.voice.tts.router.synthesize).
+            raise NotImplementedError(
+                f"kokoro optional deps not installed: {e}. "
+                "Run `uv pip install kokoro` or use prefer='fallback'."
+            ) from e
         except Exception as e:
-            # kokoro pkg missing, numpy missing, model-time errors, etc.
-            # Surface as a structured upstream failure so the router and
-            # gateway can report it the same way they do for the mock
-            # branch (see TTSError contract in glc.voice.tts.base).
+            # Real runtime failure (model load error, inference crash,
+            # etc.). Surface as a structured upstream failure so the
+            # router and gateway can report it the same way they do for
+            # the mock branch (see TTSError contract in
+            # glc.voice.tts.base).
             raise TTSError(f"kokoro synthesis failed: {e}", status=502) from e
 
         if not wav_bytes:
