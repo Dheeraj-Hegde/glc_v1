@@ -7,17 +7,17 @@
 
 | Name | GitHub |
 |------|--------|
-| Abhijeet Upadhyay | @AbhijeetUpadhyay |
-| Amritanshu Singh | @AmritanshuSingh |
-| Dheeraj Hegde | @DheerajHegde |
-| Gaurav Pandey | @GauravPandey |
-| Prateek Mohan Garg | @prateekmohanGarg |
-| Satya Nayak | @SatyaNayak |
-| Soubhik Maji | @SoubhikMaji |
-| Sri Varshini Dharmaraj | @SriVarshiniDharmaraj |
+| Abhijeet Upadhyay | |
+| Amritanshu Singh | |
+| Dheeraj Hegde | @Dheeraj-Hegde |
+| Gaurav Pandey | |
+| Prateek Mohan Garg | @pmgarg |
+| Satya Nayak | |
+| Soubhik Maji | @majisoubhik01 |
+| Sri Varshini Dharmaraj | @srijadharmaraj1|
 | Sujit Kumar Thakur | @sujthr |
-| Vikas Gupta | @VikasGupta |
-| Yashwanth G | @YashwanthG |
+| Vikas Gupta | @guptavik |
+| Yashwanth G | @gyashwanth2711|
 
 ## Demo
 
