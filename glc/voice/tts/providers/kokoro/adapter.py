@@ -64,9 +64,7 @@ class Provider(TTSProvider):
         # loop for every concurrent gateway request. Offload to a worker
         # thread so the gateway stays responsive.
         try:
-            wav_bytes, sample_rate = await asyncio.to_thread(
-                runner.synthesize, text, voice
-            )
+            wav_bytes, sample_rate = await asyncio.to_thread(runner.synthesize, text, voice)
         except TTSError:
             # Already structured — let it through unchanged.
             raise
