@@ -78,3 +78,64 @@ async def test_channel_specific_behaviour_pipeline_reuse(mock):
     assert mock.pipeline_load_count == 1, (
         f"pipeline must load exactly once; loaded {mock.pipeline_load_count}x"
     )
+
+# tests by: Sri Varshini D
+@pytest.mark.asyncio
+async def test_synthesize_rate_limit_raises_429(mock):
+    """Upstream rate-limit must surface as TTSError with status 429."""
+    mock.rate_limited = True
+    adapter = Provider(config={"mock": mock})
+    with pytest.raises(TTSError) as ei:
+        await adapter.synthesize("hi")
+    assert ei.value.status == 429
+
+
+@pytest.mark.asyncio
+async def test_synthesize_voice_id_passed_to_upstream(mock):
+    """voice_id must be forwarded to the upstream mock unchanged."""
+    adapter = Provider(config={"mock": mock})
+    await adapter.synthesize("hello", voice_id="af_bella")
+    assert mock.last_voice_id == "af_bella"
+
+
+@pytest.mark.asyncio
+async def test_synthesize_different_voice_ids(mock):
+    """Adapter must accept any voice_id string without error."""
+    adapter = Provider(config={"mock": mock})
+    for voice in ["af_bella", "af_sky", "am_adam"]:
+        r = await adapter.synthesize("test", voice_id=voice)
+        assert isinstance(r, SynthesizeResult)
+
+
+@pytest.mark.asyncio
+async def test_synthesize_mime_type_is_wav(mock):
+    """Returned mime type must be audio/wav."""
+    adapter = Provider(config={"mock": mock})
+    r = await adapter.synthesize("hello")
+    assert r.mime == "audio/wav"
+
+
+@pytest.mark.asyncio
+async def test_synthesize_cost_usd_is_zero(mock):
+    """Kokoro is a local model — cost must always be 0.0."""
+    adapter = Provider(config={"mock": mock})
+    r = await adapter.synthesize("hello")
+    assert r.cost_usd == 0.0
+
+
+@pytest.mark.asyncio
+async def test_synthesize_provider_field_is_kokoro(mock):
+    """Result provider field must always identify as kokoro."""
+    adapter = Provider(config={"mock": mock})
+    r = await adapter.synthesize("hello", voice_id="af_sky")
+    assert r.provider == "kokoro"
+
+
+@pytest.mark.asyncio
+async def test_synthesize_records_all_calls(mock):
+    """Every synthesize call must be logged in received_calls."""
+    adapter = Provider(config={"mock": mock})
+    await adapter.synthesize("first")
+    await adapter.synthesize("second")
+    await adapter.synthesize("third")
+    assert len(mock.received_calls) == 3
